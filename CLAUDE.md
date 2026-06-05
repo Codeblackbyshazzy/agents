@@ -7,7 +7,7 @@ Read this entire file before touching any file in this repo.
 
 ## What this repo is
 
-A collection of Claude Code subagents — 8 specialist AI agents (7 engineers + 1 installer utility) that run entirely inside Claude Code sessions. No platform, no login, no data stored. Engineers install them globally or per project and hire them via slash commands.
+A collection of Claude Code subagents — 15 specialist AI agents covering the full sprint cycle (Think → Plan → Build → Review → Test → Ship → Reflect) that run entirely inside Claude Code sessions. No platform, no login, no data stored, zero dependencies. Engineers install them globally or per project and hire them via slash commands.
 
 This repo is open source under MIT. It lives at `github.com/navox-labs/agents`.
 
@@ -29,15 +29,19 @@ This repo is open source under MIT. It lives at `github.com/navox-labs/agents`.
 
 | Command | What it does |
 |---|---|
-| `/hire-team` | Onboard the full team, show handoff order |
-| `/agency-run <task>` | Orchestrate the full team to complete a task end-to-end |
-| `bash scripts/validate.sh` | Run repo integrity checks (111 checks across agents, docs, plugins, git) |
+| `/hire-team` | Onboard the full 15-agent team, show sprint modes |
+| `/agency-run FULL <task>` | Full sprint: Think → Plan → Build → Review → Test → Ship → Reflect |
+| `/agency-run QUICK <task>` | Quick sprint: Plan → Build → Test → Ship |
+| `/agency-run HOTFIX <task>` | Hotfix sprint: Investigate → Build → Ship |
+| `bash scripts/validate.sh` | Run repo integrity checks (210+ checks across agents, docs, plugins, git) |
+| `bash scripts/eval.sh` | Score each agent 0-10 against quality rubric |
 
 ## Project memory
 
-The team's institutional memory lives in two places:
+The team's institutional memory lives in three places:
 - `.claude/project-memory.md` — shared across all agents, updated after every run
 - `.claude/memory/[agent].md` — per-agent memory, updated after each agent run
+- `.claude/memory/context/` — context snapshots for pause/resume (created by context-manager)
 
 Never delete these files. They are the team's knowledge base.
 
@@ -54,31 +58,48 @@ navox-labs/agents/
 ├── CLAUDE.md
 ├── README.md
 ├── GETTING-STARTED.md
+├── ETHOS.md                           ← shared builder philosophy (referenced by all agents)
+├── ARCHITECTURE.md                    ← system design overview
 ├── LICENSE
 │
 ├── .claude/
 │   ├── agents/                        ← subagent definitions (one file per agent)
 │   │   ├── architect.md               ← _architect (agent)
+│   │   ├── context-manager.md         ← _context-manager (agent)
 │   │   ├── devops.md                  ← _devops (agent)
 │   │   ├── fullstack.md               ← _fullstack (agent)
 │   │   ├── installer.md               ← _installer (agent, auto-dispatched — no command wrapper)
+│   │   ├── investigator.md            ← _investigator (agent)
 │   │   ├── local-review.md            ← local-review (agent, invoked by agency-run)
 │   │   ├── qa.md                      ← _qa (agent)
+│   │   ├── retro.md                   ← _retro (agent)
+│   │   ├── reviewer.md               ← _reviewer (agent)
 │   │   ├── security.md                ← _security (agent)
+│   │   ├── shipper.md                 ← _shipper (agent)
+│   │   ├── spec-writer.md             ← _spec-writer (agent)
+│   │   ├── strategist.md              ← _strategist (agent)
 │   │   └── ux.md                      ← _ux (agent)
 │   │
 │   ├── commands/                      ← slash commands
-│   │   ├── agency-run.md              ← /agency-run (orchestrator)
+│   │   ├── agency-run.md              ← /agency-run (orchestrator with FULL/QUICK/HOTFIX)
 │   │   ├── architect.md               ← /architect (command wrapper → _architect)
+│   │   ├── context-manager.md         ← /context-manager (command wrapper → _context-manager)
 │   │   ├── devops.md                  ← /devops (command wrapper → _devops)
 │   │   ├── fullstack.md               ← /fullstack (command wrapper → _fullstack)
 │   │   ├── hire-team.md               ← /hire-team (onboarding)
+│   │   ├── investigator.md            ← /investigator (command wrapper → _investigator)
 │   │   ├── qa.md                      ← /qa (command wrapper → _qa)
+│   │   ├── retro.md                   ← /retro (command wrapper → _retro)
+│   │   ├── reviewer.md               ← /reviewer (command wrapper → _reviewer)
 │   │   ├── security.md               ← /security (command wrapper → _security)
+│   │   ├── shipper.md                 ← /shipper (command wrapper → _shipper)
+│   │   ├── spec-writer.md             ← /spec-writer (command wrapper → _spec-writer)
+│   │   ├── strategist.md              ← /strategist (command wrapper → _strategist)
 │   │   └── ux.md                      ← /ux (command wrapper → _ux)
 │   │
 │   ├── memory/                        ← per-agent memory files (created at runtime)
-│   │   └── [agent].md
+│   │   ├── [agent].md
+│   │   └── context/                   ← context snapshots (created by context-manager)
 │   │
 │   ├── project-memory.md             ← shared project memory (created at runtime)
 │   └── settings.local.json           ← local permission overrides (gitignored)
@@ -88,7 +109,14 @@ navox-labs/agents/
 │   └── marketplace.json               ← marketplace registry
 │
 ├── scripts/
-│   └── validate.sh                    ← repo integrity checker (bash scripts/validate.sh)
+│   ├── validate.sh                    ← repo integrity checker (bash scripts/validate.sh)
+│   ├── eval.sh                        ← agent quality scorer (bash scripts/eval.sh)
+│   └── setup.sh                       ← multi-platform installer (bash scripts/setup.sh)
+│
+├── eval/                              ← eval system
+│   ├── rubric.md                      ← 10-point quality rubric
+│   ├── tasks/                         ← runtime eval task definitions
+│   └── results/                       ← eval output (gitignored)
 │
 ├── templates/                         ← starter CLAUDE.md files per stack
 │   ├── nextjs.CLAUDE.md
@@ -100,7 +128,7 @@ navox-labs/agents/
 └── docs/
     ├── modes.md                       ← all modes for all agents
     ├── auth-ownership.md              ← auth responsibility table
-    ├── handoff-chain.md               ← agent handoff flow diagram
+    ├── handoff-chain.md               ← agent handoff flow diagram (FULL/QUICK/HOTFIX)
     ├── hitl.md                        ← human-in-the-loop guide
     ├── parallel-execution.md          ← parallel agent execution guide
     └── install.md                     ← installation instructions
@@ -131,7 +159,7 @@ description: One sentence. What this agent does and when Claude should load it a
 |---|---|
 | `name` | Lowercase. Agents use underscore prefix (`_architect`). Commands use plain name (`architect`). |
 | `description` | One sentence. Used by Claude to auto-load the agent. Must include trigger keywords. |
-| `model` | Required for agents. `claude-opus-4-6` for Architect + Security. `claude-sonnet-4-6` for all others. |
+| `model` | Required for agents. `claude-opus-4-6` for Architect, Security, Strategist, Reviewer. `claude-sonnet-4-6` for all others. |
 | `tools` | Required for agents. Comma-separated list of allowed tools (Read, Write, Edit, Bash, Glob, Grep, WebSearch). |
 
 ### Agent name → slash command mapping
@@ -141,20 +169,34 @@ Agents use the underscore-prefix pattern to avoid name collision with command wr
 | File | name field | Type | Slash command |
 |---|---|---|---|
 | architect.md | `_architect` | agent | via `/architect` command wrapper |
+| context-manager.md | `_context-manager` | agent | via `/context-manager` command wrapper |
 | devops.md | `_devops` | agent | via `/devops` command wrapper |
 | fullstack.md | `_fullstack` | agent | via `/fullstack` command wrapper |
+| investigator.md | `_investigator` | agent | via `/investigator` command wrapper |
 | qa.md | `_qa` | agent | via `/qa` command wrapper |
+| retro.md | `_retro` | agent | via `/retro` command wrapper |
+| reviewer.md | `_reviewer` | agent | via `/reviewer` command wrapper |
 | security.md | `_security` | agent | via `/security` command wrapper |
+| shipper.md | `_shipper` | agent | via `/shipper` command wrapper |
+| spec-writer.md | `_spec-writer` | agent | via `/spec-writer` command wrapper |
+| strategist.md | `_strategist` | agent | via `/strategist` command wrapper |
 | ux.md | `_ux` | agent | via `/ux` command wrapper |
 | installer.md | `_installer` | agent | auto-dispatched by Claude (no wrapper) |
 | local-review.md | `local-review` | agent | invoked by agency-run (no wrapper) |
 | agency-run.md | `agency-run` | command | `/agency-run` |
 | hire-team.md | `hire-team` | command | `/hire-team` |
 | architect.md (commands/) | `architect` | command wrapper | `/architect` → reads `_architect` |
+| context-manager.md (commands/) | `context-manager` | command wrapper | `/context-manager` → reads `_context-manager` |
 | devops.md (commands/) | `devops` | command wrapper | `/devops` → reads `_devops` |
 | fullstack.md (commands/) | `fullstack` | command wrapper | `/fullstack` → reads `_fullstack` |
+| investigator.md (commands/) | `investigator` | command wrapper | `/investigator` → reads `_investigator` |
 | qa.md (commands/) | `qa` | command wrapper | `/qa` → reads `_qa` |
+| retro.md (commands/) | `retro` | command wrapper | `/retro` → reads `_retro` |
+| reviewer.md (commands/) | `reviewer` | command wrapper | `/reviewer` → reads `_reviewer` |
 | security.md (commands/) | `security` | command wrapper | `/security` → reads `_security` |
+| shipper.md (commands/) | `shipper` | command wrapper | `/shipper` → reads `_shipper` |
+| spec-writer.md (commands/) | `spec-writer` | command wrapper | `/spec-writer` → reads `_spec-writer` |
+| strategist.md (commands/) | `strategist` | command wrapper | `/strategist` → reads `_strategist` |
 | ux.md (commands/) | `ux` | command wrapper | `/ux` → reads `_ux` |
 
 ---
@@ -164,9 +206,10 @@ Agents use the underscore-prefix pattern to avoid name collision with command wr
 Every file in `.claude/commands/` uses the same frontmatter format as agents.
 The `hire-team` command should:
 1. Briefly explain what the full team does
-2. Instruct the user to start with `/architect DIAGNOSE` if unsure
-3. List all 8 agents with their primary slash command
-4. Show the recommended handoff order
+2. Instruct the user to start with `/strategist DIAGNOSE` for new ideas or `/architect DIAGNOSE` if unsure
+3. List all 15 agents with their primary slash command
+4. Show the three sprint modes (FULL, QUICK, HOTFIX)
+5. Show the recommended handoff order for a full sprint
 
 ---
 
@@ -176,7 +219,7 @@ The `hire-team` command should:
 |---|---|
 | `modes.md` | Every agent listed, every mode listed, one-line description per mode |
 | `auth-ownership.md` | The full auth ownership table — all 10 rows, all agents |
-| `handoff-chain.md` | The full chain: DIAGNOSE → DESIGN → parallel tracks → BUILD → parallel QA+Security → LAUNCH-AUDIT → SHIP |
+| `handoff-chain.md` | Three sprint chains: FULL (10 groups), QUICK (6 groups), HOTFIX (3 groups) |
 | `install.md` | Plugin install, manual install, verification steps, uninstall |
 
 ---
@@ -186,7 +229,7 @@ The `hire-team` command should:
 The README is the public landing page. Keep it sharp.
 
 - First 3 lines must communicate: what it is, who it's for, how to install
-- The team table must stay at the top — 8 rows, one per agent
+- The team table must stay at the top — 15 rows, one per agent
 - Install block must always show a working copy command
 - Never remove the "What this is not" section — it's a key differentiator
 - The auth ownership table must stay complete
@@ -233,29 +276,30 @@ This file is written for junior engineers who have never worked in a team before
 
 Before committing any changes, verify:
 
-- [ ] All 8 agent files exist in `.claude/agents/`
+- [ ] All 15 agent files exist in `.claude/agents/`
 - [ ] All agent files have valid frontmatter (`name` + `description` + `model` + `tools` where applicable)
-- [ ] All 6 command wrappers exist in `.claude/commands/` and reference the correct agent file
-- [ ] `hire-team.md` exists in `.claude/commands/`
-- [ ] `agency-run.md` exists in `.claude/commands/`
-- [ ] `local-review.md` exists in `.claude/agents/`
+- [ ] All 13 command wrappers + hire-team + agency-run exist in `.claude/commands/` (15 total)
+- [ ] `ETHOS.md` and `ARCHITECTURE.md` exist in repo root
 - [ ] `GETTING-STARTED.md` exists in repo root
-- [ ] All 4 docs files exist and are non-empty
-- [ ] `docs/handoff-chain.md` includes local-review in the chain
-- [ ] README.md team table matches the actual agent files
+- [ ] All 6 docs files exist and are non-empty
+- [ ] `docs/handoff-chain.md` includes all three sprint chains
+- [ ] README.md team table matches the actual agent files (15 rows)
+- [ ] Plugin manifests list all 15 agents and 15 commands
+- [ ] `scripts/eval.sh` passes (all agents score 8/10+)
+- [ ] `scripts/validate.sh` passes (0 failures)
 - [ ] No file outside this structure was created
 - [ ] No binary, config, or dependency file was added
 
-Run this to verify agent files are present:
+Run this to verify:
 ```bash
+bash scripts/validate.sh    # 210+ structural checks
+bash scripts/eval.sh        # Agent quality scoring (14 agents, 8/10+ threshold)
+
 ls .claude/agents/
-# Expected: architect.md  devops.md  fullstack.md  installer.md  local-review.md  qa.md  security.md  ux.md
+# Expected: 15 files (architect.md through ux.md)
 
 ls .claude/commands/
-# Expected: agency-run.md  architect.md  devops.md  fullstack.md  hire-team.md  qa.md  security.md  ux.md
-
-ls docs/
-# Expected: auth-ownership.md  handoff-chain.md  hitl.md  install.md  modes.md  parallel-execution.md
+# Expected: 15 files (agency-run.md through ux.md)
 ```
 
 ---
