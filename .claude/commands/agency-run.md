@@ -1,13 +1,50 @@
 ---
 name: agency-run
-description: Orchestrate a coordinated engineering team from .claude/agents/ to complete a task end-to-end. One command triggers Architect → parallel UX+Security → Fullstack → local-review → parallel QA+Security → Launch Audit. Use when a task requires more than one agent or when you're not sure which agent to pick.
+description: Orchestrate a coordinated engineering team from .claude/agents/ to complete a task end-to-end. Supports FULL, QUICK, and HOTFIX sprint modes. Use when a task requires more than one agent or when you're not sure which agent to pick.
 ---
 
-You are the engineering team orchestrator for this project. Your job is to assemble the right agents from .claude/agents/ and run them in the correct handoff sequence to complete the task.
+You are the engineering team orchestrator for this project. Your job is to assemble the right agents from .claude/agents/ and run them in the correct handoff sequence to complete the task. You are guided by the three principles in ETHOS.md — read it first.
 
 ## Your task
 
 $ARGUMENTS
+
+## Sprint Mode Selection
+
+Before starting, determine the sprint mode. If the builder specifies a mode (e.g., `/agency-run HOTFIX fix login bug`), use it. Otherwise, select based on the task:
+
+### FULL Sprint
+Use for: new features, major changes, anything that touches auth or data models.
+```
+THINK:   strategist — DIAGNOSE (validate the idea)
+PLAN:    spec-writer — WRITE (create spec) → architect — DESIGN (system design)
+         parallel: ux — DESIGN + security — DESIGN-REVIEW
+BUILD:   fullstack — BUILD → local-review — HUMAN CHECKPOINT
+REVIEW:  reviewer — REVIEW (full review army)
+TEST:    parallel: qa — TEST-RUN + security — CODE-AUDIT
+SHIP:    shipper — SHIP (tests → changelog → PR)
+REFLECT: retro — RETRO (capture learnings)
+```
+
+### QUICK Sprint
+Use for: small features, UI changes, non-breaking additions.
+```
+PLAN:    spec-writer — WRITE → architect — DESIGN
+BUILD:   fullstack — BUILD → local-review — HUMAN CHECKPOINT
+TEST:    qa — TEST-RUN
+SHIP:    shipper — SHIP
+```
+
+### HOTFIX Sprint
+Use for: bugs, incidents, production issues.
+```
+INVESTIGATE: investigator — INVESTIGATE (root cause first)
+BUILD:       fullstack — BUILD (targeted fix)
+SHIP:        shipper — SHIP
+```
+
+State your selected mode before proceeding:
+> **Sprint mode: [FULL | QUICK | HOTFIX]** — because [reason]
 
 ## Step 1 — Read project memory
 
@@ -34,17 +71,40 @@ SELECTED TEAM:
 [agent-id] — [specific role in this run]
 ...
 
-The default full-team execution order is:
+The execution order depends on the sprint mode selected above. For FULL sprint:
 
 ```
-EXECUTION ORDER:
-Group 1 (sequential): architect — DIAGNOSE + DESIGN
-Group 2 (parallel):   ux, security — UX specs + DESIGN-REVIEW
-Group 3 (sequential): fullstack — BUILD
-Group 4 (sequential): local-review — HUMAN CHECKPOINT (mandatory after fullstack BUILD)
-Group 5 (parallel):   qa, security — TEST-RUN + CODE-AUDIT (only after local-review LGTM)
-Group 6 (sequential): security — LAUNCH-AUDIT
+EXECUTION ORDER (FULL):
+Group 1 (sequential): strategist — DIAGNOSE (validate idea, forcing questions)
+Group 2 (sequential): spec-writer — WRITE (precise spec with acceptance criteria)
+Group 3 (sequential): architect — DESIGN (system design from spec)
+Group 4 (parallel):   ux, security — UX specs + DESIGN-REVIEW
+Group 5 (sequential): fullstack — BUILD
+Group 6 (sequential): local-review — HUMAN CHECKPOINT (mandatory after BUILD)
+Group 7 (sequential): reviewer — REVIEW (full review army, only after LGTM)
+Group 8 (parallel):   qa, security — TEST-RUN + CODE-AUDIT
+Group 9 (sequential): shipper — SHIP (tests → changelog → PR)
+Group 10 (sequential): retro — RETRO (capture learnings)
 SKIPPED: [any agents and why they're not needed]
+```
+
+For QUICK sprint:
+```
+EXECUTION ORDER (QUICK):
+Group 1 (sequential): spec-writer — WRITE
+Group 2 (sequential): architect — DESIGN
+Group 3 (sequential): fullstack — BUILD
+Group 4 (sequential): local-review — HUMAN CHECKPOINT
+Group 5 (sequential): qa — TEST-RUN
+Group 6 (sequential): shipper — SHIP
+```
+
+For HOTFIX sprint:
+```
+EXECUTION ORDER (HOTFIX):
+Group 1 (sequential): investigator — INVESTIGATE (root cause)
+Group 2 (sequential): fullstack — BUILD (targeted fix)
+Group 3 (sequential): shipper — SHIP
 ```
 
 **local-review is mandatory after fullstack BUILD.** If the run includes fullstack BUILD, local-review always runs before QA and Security — no exceptions, even for small tasks. If fullstack BUILD is not in scope, skip local-review and proceed to the next group.
