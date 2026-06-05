@@ -30,7 +30,7 @@ fi
 
 section "Agent files (.claude/agents/)"
 
-EXPECTED_AGENTS="architect devops fullstack installer local-review qa security ux"
+EXPECTED_AGENTS="architect context-manager devops fullstack installer investigator local-review qa retro reviewer security shipper spec-writer strategist ux"
 
 for agent in $EXPECTED_AGENTS; do
   file=".claude/agents/${agent}.md"
@@ -78,11 +78,12 @@ for agent in $EXPECTED_AGENTS; do
   fi
 done
 
-# ─── Architect + Security use Opus ───────────────────────────
+# ─── Model routing ────────────────────────────────────────────
 
 section "Model routing"
 
-for agent in architect security; do
+# Opus agents: architect, security, strategist, reviewer
+for agent in architect security strategist reviewer; do
   file=".claude/agents/${agent}.md"
   [ ! -f "$file" ] && continue
   if grep -q "claude-opus" "$file"; then
@@ -92,7 +93,8 @@ for agent in architect security; do
   fi
 done
 
-for agent in devops fullstack installer local-review qa ux; do
+# Sonnet agents: everything else (except installer and local-review which are utility)
+for agent in context-manager devops fullstack installer investigator local-review qa retro shipper spec-writer ux; do
   file=".claude/agents/${agent}.md"
   [ ! -f "$file" ] && continue
   if grep -q "claude-sonnet" "$file"; then
@@ -106,7 +108,7 @@ done
 
 section "Command files (.claude/commands/)"
 
-EXPECTED_COMMANDS="agency-run architect devops fullstack hire-team qa security ux"
+EXPECTED_COMMANDS="agency-run architect context-manager devops fullstack hire-team investigator qa retro reviewer security shipper spec-writer strategist ux"
 
 for cmd in $EXPECTED_COMMANDS; do
   file=".claude/commands/${cmd}.md"
@@ -122,7 +124,7 @@ done
 section "Handoff contracts"
 
 # installer doesn't need a handoff contract (utility agent)
-HANDOFF_AGENTS="architect devops fullstack local-review qa security ux"
+HANDOFF_AGENTS="architect context-manager devops fullstack investigator local-review qa retro reviewer security shipper spec-writer strategist ux"
 
 for agent in $HANDOFF_AGENTS; do
   file=".claude/agents/${agent}.md"
@@ -149,16 +151,38 @@ for agent in $HANDOFF_AGENTS; do
   file=".claude/agents/${agent}.md"
   [ ! -f "$file" ] && continue
 
-  if grep -q "## Current State" "$file"; then
+  if grep -q "## Current State\|### Current State" "$file"; then
     pass "$agent: has Current State in memory template"
   else
     fail "$agent: MISSING Current State in memory template"
   fi
 
-  if grep -q "## History" "$file"; then
+  if grep -q "## History\|### History" "$file"; then
     pass "$agent: has History in memory template"
   else
     fail "$agent: MISSING History in memory template"
+  fi
+done
+
+# ─── ETHOS.md reference ──────────────────────────────────────
+
+section "ETHOS.md integration"
+
+if [ -f "ETHOS.md" ]; then
+  pass "ETHOS.md exists"
+else
+  fail "ETHOS.md MISSING"
+fi
+
+# Check that all non-utility agents reference ETHOS.md
+for agent in $HANDOFF_AGENTS; do
+  file=".claude/agents/${agent}.md"
+  [ ! -f "$file" ] && continue
+
+  if grep -qi "ETHOS.md" "$file"; then
+    pass "$agent: references ETHOS.md"
+  else
+    fail "$agent: does NOT reference ETHOS.md"
   fi
 done
 
@@ -218,6 +242,23 @@ if [ -f ".claude-plugin/plugin.json" ] && [ -f ".claude-plugin/marketplace.json"
   fi
 fi
 
+# Plugin agent count
+if [ -f ".claude-plugin/plugin.json" ]; then
+  PLUGIN_AGENT_COUNT=$(grep -c '\.claude/agents/' .claude-plugin/plugin.json || echo "0")
+  if [ "$PLUGIN_AGENT_COUNT" -eq 15 ]; then
+    pass "plugin.json: lists 15 agents"
+  else
+    fail "plugin.json: lists $PLUGIN_AGENT_COUNT agents (expected 15)"
+  fi
+
+  PLUGIN_CMD_COUNT=$(grep -c '\.claude/commands/' .claude-plugin/plugin.json || echo "0")
+  if [ "$PLUGIN_CMD_COUNT" -eq 15 ]; then
+    pass "plugin.json: lists 15 commands"
+  else
+    fail "plugin.json: lists $PLUGIN_CMD_COUNT commands (expected 15)"
+  fi
+fi
+
 # ─── Agent count consistency ─────────────────────────────────
 
 section "Agent count consistency"
@@ -225,40 +266,32 @@ section "Agent count consistency"
 # Count actual agent files
 ACTUAL_COUNT=$(ls -1 .claude/agents/*.md 2>/dev/null | wc -l | tr -d ' ')
 
-if [ "$ACTUAL_COUNT" -eq 8 ]; then
-  pass "8 agent files found"
+if [ "$ACTUAL_COUNT" -eq 15 ]; then
+  pass "15 agent files found"
 else
-  fail "expected 8 agent files, found $ACTUAL_COUNT"
+  fail "expected 15 agent files, found $ACTUAL_COUNT"
 fi
 
-# Check references in key files
-for file in README.md CLAUDE.md; do
+# Count actual command files
+ACTUAL_CMD_COUNT=$(ls -1 .claude/commands/*.md 2>/dev/null | wc -l | tr -d ' ')
+
+if [ "$ACTUAL_CMD_COUNT" -eq 15 ]; then
+  pass "15 command files found"
+else
+  fail "expected 15 command files, found $ACTUAL_CMD_COUNT"
+fi
+
+# ─── New root files ──────────────────────────────────────────
+
+section "Required root files"
+
+for file in CLAUDE.md README.md GETTING-STARTED.md LICENSE ETHOS.md ARCHITECTURE.md .gitignore; do
   if [ -f "$file" ]; then
-    if grep -q "8 agents\|8 specialist" "$file"; then
-      pass "$file: references 8 agents"
-    elif grep -q "7 agents\|7 specialist" "$file"; then
-      fail "$file: still references 7 agents (should be 8)"
-    else
-      warn "$file: no agent count found"
-    fi
+    pass "$file exists"
+  else
+    fail "$file MISSING"
   fi
 done
-
-if [ -f ".claude-plugin/plugin.json" ]; then
-  if grep -q "8 agents" ".claude-plugin/plugin.json"; then
-    pass "plugin.json: references 8 agents"
-  else
-    fail "plugin.json: agent count mismatch"
-  fi
-fi
-
-if [ -f ".claude-plugin/marketplace.json" ]; then
-  if grep -q "8 agents" ".claude-plugin/marketplace.json"; then
-    pass "marketplace.json: references 8 agents"
-  else
-    fail "marketplace.json: agent count mismatch"
-  fi
-fi
 
 # ─── Docs files ──────────────────────────────────────────────
 
@@ -279,17 +312,43 @@ for doc in $EXPECTED_DOCS; do
   fi
 done
 
-# ─── Required root files ────────────────────────────────────
+# ─── Eval system ─────────────────────────────────────────────
 
-section "Required root files"
+section "Eval system"
 
-for file in CLAUDE.md README.md GETTING-STARTED.md LICENSE .gitignore; do
-  if [ -f "$file" ]; then
-    pass "$file exists"
+if [ -f "scripts/eval.sh" ]; then
+  pass "scripts/eval.sh exists"
+else
+  fail "scripts/eval.sh MISSING"
+fi
+
+if [ -f "eval/rubric.md" ]; then
+  pass "eval/rubric.md exists"
+else
+  fail "eval/rubric.md MISSING"
+fi
+
+EVAL_TASK_COUNT=$(ls -1 eval/tasks/*.md 2>/dev/null | wc -l | tr -d ' ')
+if [ "$EVAL_TASK_COUNT" -ge 7 ]; then
+  pass "eval/tasks: $EVAL_TASK_COUNT task files found"
+else
+  fail "eval/tasks: expected 7+ task files, found $EVAL_TASK_COUNT"
+fi
+
+# ─── Setup script ────────────────────────────────────────────
+
+section "Setup script"
+
+if [ -f "scripts/setup.sh" ]; then
+  pass "scripts/setup.sh exists"
+  if [ -x "scripts/setup.sh" ]; then
+    pass "scripts/setup.sh is executable"
   else
-    fail "$file MISSING"
+    fail "scripts/setup.sh is NOT executable"
   fi
-done
+else
+  fail "scripts/setup.sh MISSING"
+fi
 
 # ─── Git hygiene ─────────────────────────────────────────────
 
@@ -309,7 +368,7 @@ else
   pass "settings.local.json not tracked"
 fi
 
-# Check .gitignore exists and covers basics
+# Check .gitignore covers eval results
 if [ -f ".gitignore" ]; then
   if grep -q "\.DS_Store" ".gitignore"; then
     pass ".gitignore covers .DS_Store"
@@ -321,6 +380,12 @@ if [ -f ".gitignore" ]; then
     pass ".gitignore covers settings.local.json"
   else
     warn ".gitignore does not cover settings.local.json"
+  fi
+
+  if grep -q "eval/results" ".gitignore"; then
+    pass ".gitignore covers eval/results/"
+  else
+    warn ".gitignore does not cover eval/results/"
   fi
 fi
 

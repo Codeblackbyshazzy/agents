@@ -1,7 +1,7 @@
 # Navox Agents
 
-> A specialist AI engineering team for Claude Code.
-> 8 agents. No platform. No login. Your code never leaves your machine.
+> A 15-agent AI engineering team that covers the full sprint cycle.
+> Think. Plan. Build. Review. Test. Ship. Reflect. Zero dependencies.
 
 [![GitHub stars](https://img.shields.io/github/stars/navox-labs/agents?style=social)](https://github.com/navox-labs/agents)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -49,10 +49,30 @@ Then install:
 
 ```bash
 git clone https://github.com/navox-labs/agents.git
+cd agents
+bash scripts/setup.sh
+```
+
+The setup script supports multiple platforms and options:
+
+```bash
+bash scripts/setup.sh --platform claude    # Claude Code (default)
+bash scripts/setup.sh --platform cursor    # Cursor
+bash scripts/setup.sh --platform copilot   # Copilot CLI
+bash scripts/setup.sh --platform codex     # Codex
+
+bash scripts/setup.sh --global             # Install to home directory (all projects)
+bash scripts/setup.sh --agents strategist,reviewer  # Install specific agents only
+bash scripts/setup.sh --list               # See all available agents
+```
+
+Or copy manually:
+```bash
 mkdir -p ~/.claude/agents ~/.claude/commands ~/.claude/templates
-cp -r agents/.claude/agents/* ~/.claude/agents/
-cp -r agents/.claude/commands/* ~/.claude/commands/
-cp -r agents/templates/* ~/.claude/templates/
+cp -r .claude/agents/* ~/.claude/agents/
+cp -r .claude/commands/* ~/.claude/commands/
+cp -r templates/* ~/.claude/templates/
+cp ETHOS.md ~/.claude/ETHOS.md
 ```
 
 ---
@@ -61,87 +81,105 @@ cp -r agents/templates/* ~/.claude/templates/
 
 Open Claude Code in any project folder and run:
 
-**If you installed as a plugin:**
+**Full sprint** (idea → shipped PR with retrospective):
 ```
-/navox-agents:agency-run Build a {browser-based} {Cookie Clicker game}
+/agency-run FULL Build a {browser-based} {Cookie Clicker game}
 with {Atari pixel art} vibes where {crabs eat cookies}.
-No authentication. No backend. Single HTML file,
-runs in any browser. Make it {addictive} and {funny}.
+No authentication. No backend. Single HTML file.
 ```
 
-**If you installed manually (copy method):**
+**Quick sprint** (skip strategy + review, get to code faster):
 ```
-/agency-run Build a {browser-based} {Cookie Clicker game}
-with {Atari pixel art} vibes where {crabs eat cookies}.
-No authentication. No backend. Single HTML file,
-runs in any browser. Make it {addictive} and {funny}.
+/agency-run QUICK Add a {dark mode toggle} to the settings page
+```
+
+**Hotfix** (bug → root cause → fix → ship):
+```
+/agency-run HOTFIX Users get 403 errors after login on mobile Safari
+```
+
+**Or use agents individually:**
+```
+/strategist DIAGNOSE I want to build a SaaS for {dog walkers}
+/investigator INVESTIGATE The checkout flow breaks on step 3
+/reviewer REVIEW
 ```
 
 Replace the `{variables}` with your own idea.
-This is exactly how we built [nom.sh](https://github.com/navox-labs/nom) in 7 minutes.
+Plugin users: prefix with `navox-agents:` (e.g. `/navox-agents:agency-run FULL ...`)
 
 ---
 
-## How it works
+## How it works — FULL Sprint
 
 ```mermaid
 flowchart TD
-    CLI["`**$ /agency-run** your prompt here`"]
+    CLI["`**$ /agency-run FULL** your task here`"]
 
-    CLI -->|your prompt| AD
+    CLI -->|your task| STRAT
 
-    subgraph ARCH ["🏗️ Architect · Opus 4.6"]
-        AD["DIAGNOSE\nreads request · maps team · flags blockers"]
-        ADE["DESIGN\nstack · auth · API contracts · security · testing"]
-        AD -->|team plan| ADE
-    end
+    STRAT["🧠 Strategist · Opus 4.6\nDIAGNOSE\nforcing questions · risk assessment · scope"]
 
-    ADE -->|system design doc| G1
+    STRAT -->|strategic brief| SPEC
+
+    SPEC["📋 Spec Writer · Sonnet 4.6\nWRITE\n7-section spec · acceptance criteria · edge cases"]
+
+    SPEC -->|buildable spec| ARCH
+
+    ARCH["🏗️ Architect · Opus 4.6\nDESIGN\nstack · auth · API contracts · security · testing"]
+
+    ARCH -->|system design| G1
 
     G1{{"⚠️ Gate 1\nyou review + approve"}}
 
-    G1 -->|auth + UX brief| UX
-    G1 -->|auth model + threats| SEC1
+    G1 -->|UX brief| UX
+    G1 -->|auth model| SEC1
 
     subgraph PARALLEL1 ["runs in parallel"]
-        UX["🎨 UI/UX · Sonnet 4.6\nFLOW → WIREFRAME → SPEC\nwireframes · component specs · all states"]
+        UX["🎨 UI/UX · Sonnet 4.6\nFLOW → DESIGN → SPEC\nwireframes · component specs · all states"]
         SEC1["🔐 Security · Opus 4.6\nDESIGN-REVIEW\nauth model · threat surface · constraints"]
     end
 
-    UX -->|wireframes + specs| G2
-    SEC1 -->|auth constraints| G2
+    UX -->|specs| G2
+    SEC1 -->|constraints| G2
 
-    G2{{"⚠️ Gate 2\nyou approve — cleared to build"}}
+    G2{{"⚠️ Gate 2\ncleared to build"}}
 
-    G2 -->|cleared to build| FS1
+    G2 -->|build| FS
 
-    FS1["⚙️ Full Stack · Sonnet 4.6\nBUILD\ncode + auth implementation + unit tests"]
+    FS["⚙️ Full Stack · Sonnet 4.6\nBUILD\ncode + auth + unit tests"]
 
-    FS1 -->|working code + tests| CP
+    FS -->|working code| CP
     CP{{"⚠️ Checkpoint\napp running locally · LGTM / FEEDBACK / STOP"}}
 
-    CP -->|code to test| QA
-    CP -->|code to audit| SEC2
+    CP -->|code to review| REV
+
+    REV["📝 Reviewer · Opus 4.6\nREVIEW\n7-specialist parallel army\nsecurity · performance · maintainability\nAPI · data · tests · errors"]
+
+    REV -->|approved| G3
+
+    G3{{"⚠️ Gate 3\nreview verdict"}}
+
+    G3 -->|code to test| QA
+    G3 -->|code to audit| SEC2
 
     subgraph PARALLEL2 ["runs in parallel"]
-        QA["🧪 QA · Sonnet 4.6\nTEST-RUN\n38 tests · auth matrix · edge cases"]
+        QA["🧪 QA · Sonnet 4.6\nTEST-RUN\ntest suite · auth matrix · edge cases"]
         SEC2["🔐 Security · Opus 4.6\nCODE-AUDIT\nOWASP · auth bypass · vulns"]
     end
 
-    QA -->|bug report| FS2
-    SEC2 -->|vulnerability report| FS2
+    QA -->|test results| SHIPPER
+    SEC2 -->|audit results| SHIPPER
 
-    FS2["⚙️ Full Stack · Sonnet 4.6\nFIXES\nall Critical findings resolved · clean push"]
+    SHIPPER["📦 Shipper · Sonnet 4.6\nSHIP\ntests → changelog → version bump → PR"]
 
-    FS2 -->|all findings resolved| G3
+    SHIPPER -->|ship report| RETRO
 
-    G3{{"⚠️ Gate 3\nSecurity LAUNCH-AUDIT · verdict"}}
+    RETRO["🔄 Retro · Sonnet 4.6\nRETRO\nwhat worked · what didn't · action items\nlearnings written to project memory"]
 
-    G3 -->|APPROVED ✓| DEVOPS
-    DEVOPS["🚀 DevOps · Sonnet 4.6\nDEPLOY\nVercel + Cloudflare · README written"]
-    DEVOPS -->|live URL + video| SHIP
+    RETRO -->|done| DONE
 
-    SHIP["🚀 SHIP"]
+    DONE["✅ Sprint Complete\nlearnings captured · ready for next sprint"]
 ```
 
 ---
@@ -150,17 +188,24 @@ flowchart TD
 
 | | Agent | What they do |
 |---|---|---|
+| 🧠 | **Strategist** | Challenges assumptions. Asks forcing questions. No sycophancy. |
+| 📋 | **Spec Writer** | Turns vague ideas into precise, testable specifications. |
 | 🏗️ | **Architect** | Designs the system. Picks the stack. Defines auth. |
 | 🎨 | **UI/UX** | Maps user flows. Specs every screen and state. |
 | ⚙️ | **Full Stack** | Builds it. Tests it. Ships clean code. |
+| 🔍 | **Investigator** | Root-cause debugging. No fixes without diagnosis. |
+| 📝 | **Reviewer** | 7-specialist parallel review army. |
 | 🚀 | **DevOps** | CI/CD. Docker. Deploys. Secrets never touch code. |
 | 👁️ | **Local Review** | Starts the app. Shows it to you. Waits for your go. |
 | 🧪 | **QA** | Finds every bug. Auth flows get extra scrutiny. |
-| 🔐 | **Security** | Audits everything. Nothing launches without a verdict. |
-| 📦 | **Installer** | Helps you discover and install individual agents. |
+| 🔐 | **Security** | OWASP + STRIDE audits. Nothing launches without a verdict. |
+| 📦 | **Shipper** | Tests, changelog, version bump, PR. The last mile. |
+| 🔄 | **Retro** | Sprint retrospectives. Learnings compound over time. |
+| 💾 | **Context Manager** | Session persistence. Pause any sprint, resume later. |
+| 🛠️ | **Installer** | Helps you discover and install individual agents. |
 
-Use one agent directly: `/architect DIAGNOSE`, `/security LAUNCH-AUDIT`, `/qa PLAN`
-(Plugin users: prefix with `navox-agents:` e.g. `/navox-agents:architect DIAGNOSE`)
+Use one agent directly: `/strategist DIAGNOSE`, `/architect DESIGN`, `/investigator INVESTIGATE`
+(Plugin users: prefix with `navox-agents:` e.g. `/navox-agents:strategist DIAGNOSE`)
 
 ---
 
@@ -180,20 +225,58 @@ Full contract details: [docs/handoff-chain.md](docs/handoff-chain.md)
 
 ---
 
-## Quick commands
+## Sprint modes
 
-Each agent supports multiple **modes** — specific workflows you trigger by name.
+Three ways to run the team, depending on what you need:
+
+| Mode | Command | What it runs |
+|---|---|---|
+| **Full Sprint** | `/agency-run FULL <task>` | Think → Plan → Build → Review → Test → Ship → Reflect |
+| **Quick Sprint** | `/agency-run QUICK <task>` | Plan → Build → Test → Ship |
+| **Hotfix** | `/agency-run HOTFIX <task>` | Investigate → Build → Ship |
+
+## Quick commands
 
 | What you need | Command |
 |---|---|
-| Don't know where to start | `/architect DIAGNOSE` |
-| Full system design | `/architect DESIGN` |
+| Validate an idea | `/strategist DIAGNOSE` |
+| Write a spec | `/spec-writer WRITE` |
+| System design | `/architect DESIGN` |
+| Debug a bug | `/investigator INVESTIGATE` |
 | Build a feature | `/fullstack BUILD` |
-| Check if it's secure | `/security LAUNCH-AUDIT` |
-| Run the whole team | `/agency-run your task here` |
+| Review code | `/reviewer REVIEW` |
+| Ship a release | `/shipper SHIP` |
+| Run a retro | `/retro RETRO` |
+| Save context | `/context-manager SAVE` |
+| Run the whole team | `/agency-run FULL your task here` |
 | See all modes | [docs/modes.md](docs/modes.md) |
 
-Plugin users: prefix commands with `navox-agents:` (e.g. `/navox-agents:architect DIAGNOSE`)
+Plugin users: prefix commands with `navox-agents:` (e.g. `/navox-agents:strategist DIAGNOSE`)
+
+---
+
+## Builder philosophy
+
+Every agent is guided by three principles from [ETHOS.md](ETHOS.md):
+
+1. **Do the Complete Thing** — no half-done work, no skipped edge cases
+2. **Investigate Before Acting** — understand what exists before changing it
+3. **Builder Sovereignty** — AI recommends, humans decide. Always.
+
+These aren't decorative. They're enforced in every agent's prompt and checked by the eval system.
+
+---
+
+## Multi-platform support
+
+Works on 4 platforms. Zero dependencies on all of them.
+
+| Platform | Install command |
+|---|---|
+| **Claude Code** | `bash scripts/setup.sh --platform claude` |
+| **Cursor** | `bash scripts/setup.sh --platform cursor` |
+| **Copilot CLI** | `bash scripts/setup.sh --platform copilot` |
+| **Codex** | `bash scripts/setup.sh --platform codex` |
 
 ---
 
@@ -244,15 +327,21 @@ Pick one. The agents read it automatically when Claude Code opens.
 
 ---
 
-## Repo validation
+## Quality assurance
 
-If you fork or customize agent prompts, run the integrity checker to catch drift:
+Two validation tools keep the agents sharp:
 
+**Repo integrity** — structural checks across all files:
 ```bash
 bash scripts/validate.sh
 ```
 
-Checks 111 things: agent files, frontmatter, model routing, handoff contracts, memory templates, plugin manifests, doc completeness, agent count consistency, and git hygiene. Exits 0 on pass, 1 on failure.
+**Agent quality eval** — scores each agent 0-10 against a rubric (frontmatter, modes, handoff contracts, anti-hallucination, memory integration, and more):
+```bash
+bash scripts/eval.sh
+```
+
+Minimum passing score: 8/10. All 14 scored agents currently pass.
 
 ---
 
