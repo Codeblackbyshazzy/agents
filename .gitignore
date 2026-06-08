@@ -2,3 +2,11 @@
 .claude/settings.local.json
 .agency-workspace/
 eval/results/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+.venv/
+*.egg
