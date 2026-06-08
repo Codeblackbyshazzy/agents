@@ -14,9 +14,9 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
-from navox_agents.models.agent_config import AgentConfig
-from navox_agents.models.output_schema import AgentOutput
-from navox_agents.validators.output_validator import validate_output
+from navox.models.agent_config import AgentConfig
+from navox.models.output_schema import AgentOutput
+from navox.validators.output_validator import validate_output
 
 
 class AgentServer:

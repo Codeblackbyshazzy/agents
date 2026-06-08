@@ -9,10 +9,10 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from navox_agents.models.agent_config import AgentConfig
-from navox_agents.validators.frontmatter import validate_frontmatter
-from navox_agents.validators.prompt_linter import lint_prompt
-from navox_agents.validators.output_validator import validate_few_shot_examples
+from navox.models.agent_config import AgentConfig
+from navox.validators.frontmatter import validate_frontmatter
+from navox.validators.prompt_linter import lint_prompt
+from navox.validators.output_validator import validate_few_shot_examples
 
 
 PASS_THRESHOLD = 8  # Minimum score to pass

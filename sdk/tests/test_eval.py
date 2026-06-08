@@ -4,24 +4,25 @@ from pathlib import Path
 
 import pytest
 
-from navox_agents.eval.scorer import (
+from navox.eval.scorer import (
     score_agent,
     score_all_agents,
     format_scores,
     AgentScore,
     PASS_THRESHOLD,
 )
-from navox_agents.eval.runner import (
+from navox.eval.runner import (
     AgentEvaluator,
     EvalResult,
     EvalTask,
     format_eval_results,
 )
-from navox_agents.models.agent_config import AgentConfig
+from navox.models.agent_config import AgentConfig
 
-REPO_ROOT = Path(__file__).parent.parent
+SDK_ROOT = Path(__file__).parent.parent
+REPO_ROOT = SDK_ROOT.parent
 AGENTS_DIR = REPO_ROOT / ".claude" / "agents"
-REGISTRY_PATH = REPO_ROOT / "agents_registry.json"
+REGISTRY_PATH = SDK_ROOT / "agents_registry.json"
 
 
 # ── Layer 1: Static scorer ──────────────────────────────────

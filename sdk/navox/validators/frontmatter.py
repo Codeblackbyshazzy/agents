@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from navox_agents.models.agent_config import AgentConfig
+from navox.models.agent_config import AgentConfig
 
 # Agents that must use Opus
 OPUS_AGENTS = {"_architect", "_security", "_strategist", "_reviewer"}

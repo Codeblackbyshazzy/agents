@@ -5,13 +5,14 @@ from pathlib import Path
 
 import pytest
 
-from navox_agents.models.agent_config import AgentConfig, _parse_frontmatter
-from navox_agents.models.output_schema import AgentOutput, ValidationItem
-from navox_agents.models.handoff_contract import HandoffContract
+from navox.models.agent_config import AgentConfig, _parse_frontmatter
+from navox.models.output_schema import AgentOutput, ValidationItem
+from navox.models.handoff_contract import HandoffContract
 
-REPO_ROOT = Path(__file__).parent.parent
+SDK_ROOT = Path(__file__).parent.parent
+REPO_ROOT = SDK_ROOT.parent
 AGENTS_DIR = REPO_ROOT / ".claude" / "agents"
-REGISTRY_PATH = REPO_ROOT / "agents_registry.json"
+REGISTRY_PATH = SDK_ROOT / "agents_registry.json"
 
 
 # ── AgentConfig tests ────────────────────────────────────────

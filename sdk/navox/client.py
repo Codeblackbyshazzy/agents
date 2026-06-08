@@ -12,15 +12,15 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from navox_agents.server import AgentServer, AgentRunResult
-from navox_agents.models.agent_config import AgentConfig
-from navox_agents.validators.frontmatter import validate_frontmatter, ValidationResult
-from navox_agents.validators.prompt_linter import lint_prompt
-from navox_agents.validators.output_validator import (
+from navox.server import AgentServer, AgentRunResult
+from navox.models.agent_config import AgentConfig
+from navox.validators.frontmatter import validate_frontmatter, ValidationResult
+from navox.validators.prompt_linter import lint_prompt
+from navox.validators.output_validator import (
     validate_output,
     validate_few_shot_examples,
 )
-from navox_agents.validators.contract_checker import (
+from navox.validators.contract_checker import (
     validate_contracts,
     validate_registry_contracts,
 )

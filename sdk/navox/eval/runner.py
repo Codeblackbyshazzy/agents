@@ -14,8 +14,8 @@ import concurrent.futures
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from navox_agents.server import AgentServer
-from navox_agents.validators.output_validator import validate_output
+from navox.server import AgentServer
+from navox.validators.output_validator import validate_output
 
 
 @dataclass
@@ -133,7 +133,7 @@ Return your evaluation as JSON with these fields:
         result.details["schema_failed"] = validation.failed
 
         # Completeness: check required fields are non-empty
-        from navox_agents.models.output_schema import AgentOutput
+        from navox.models.output_schema import AgentOutput
         try:
             parsed = AgentOutput.from_xml(output)
             completeness_checks = {

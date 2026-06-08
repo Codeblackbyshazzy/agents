@@ -4,12 +4,13 @@ from pathlib import Path
 
 import pytest
 
-from navox_agents.server import AgentServer, _add_user_message, _add_assistant_message
-from navox_agents.client import AgentClient
+from navox.server import AgentServer, _add_user_message, _add_assistant_message
+from navox.client import AgentClient
 
-REPO_ROOT = Path(__file__).parent.parent
+SDK_ROOT = Path(__file__).parent.parent
+REPO_ROOT = SDK_ROOT.parent
 AGENTS_DIR = REPO_ROOT / ".claude" / "agents"
-REGISTRY_PATH = REPO_ROOT / "agents_registry.json"
+REGISTRY_PATH = SDK_ROOT / "agents_registry.json"
 
 
 # ── Server tests ─────────────────────────────────────────────

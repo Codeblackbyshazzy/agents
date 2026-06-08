@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from navox_agents.models.agent_config import AgentConfig
-from navox_agents.models.handoff_contract import HandoffContract
-from navox_agents.validators.frontmatter import ValidationResult
+from navox.models.agent_config import AgentConfig
+from navox.models.handoff_contract import HandoffContract
+from navox.validators.frontmatter import ValidationResult
 
 
 def load_all_contracts(agents_dir: str | Path) -> dict[str, HandoffContract]:
@@ -129,7 +129,7 @@ def _agent_matches(entries: list, target_slug: str) -> bool:
     Handles wildcards ('All agents', 'Orchestrator', 'sprint-chain')
     and human name references ('Jordan' → fullstack, 'Kai' → security).
     """
-    from navox_agents.models.handoff_contract import ContractEntry
+    from navox.models.handoff_contract import ContractEntry
 
     for entry in entries:
         agent_lower = entry.agent.lower()

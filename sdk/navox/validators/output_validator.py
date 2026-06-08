@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from navox_agents.models.output_schema import AgentOutput
-from navox_agents.validators.frontmatter import ValidationResult
+from navox.models.output_schema import AgentOutput
+from navox.validators.frontmatter import ValidationResult
 
 
 # Required XML fields for a valid output

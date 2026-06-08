@@ -4,15 +4,16 @@ from pathlib import Path
 
 import pytest
 
-from navox_agents.models.agent_config import AgentConfig
-from navox_agents.validators.frontmatter import validate_frontmatter
-from navox_agents.validators.prompt_linter import lint_prompt
-from navox_agents.validators.output_validator import (
+from navox.models.agent_config import AgentConfig
+from navox.validators.frontmatter import validate_frontmatter
+from navox.validators.prompt_linter import lint_prompt
+from navox.validators.output_validator import (
     validate_output,
     validate_few_shot_examples,
 )
 
-REPO_ROOT = Path(__file__).parent.parent
+SDK_ROOT = Path(__file__).parent.parent
+REPO_ROOT = SDK_ROOT.parent
 AGENTS_DIR = REPO_ROOT / ".claude" / "agents"
 
 

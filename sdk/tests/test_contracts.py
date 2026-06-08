@@ -4,15 +4,16 @@ from pathlib import Path
 
 import pytest
 
-from navox_agents.validators.contract_checker import (
+from navox.validators.contract_checker import (
     load_all_contracts,
     validate_contracts,
     validate_registry_contracts,
 )
 
-REPO_ROOT = Path(__file__).parent.parent
+SDK_ROOT = Path(__file__).parent.parent
+REPO_ROOT = SDK_ROOT.parent
 AGENTS_DIR = REPO_ROOT / ".claude" / "agents"
-REGISTRY_PATH = REPO_ROOT / "agents_registry.json"
+REGISTRY_PATH = SDK_ROOT / "agents_registry.json"
 
 
 class TestContractLoader:

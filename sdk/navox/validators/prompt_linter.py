@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from navox_agents.models.agent_config import AgentConfig
-from navox_agents.validators.frontmatter import ValidationResult
+from navox.models.agent_config import AgentConfig
+from navox.validators.frontmatter import ValidationResult
 
 
 def lint_prompt(config: AgentConfig) -> ValidationResult:

@@ -18,9 +18,9 @@ import json
 import sys
 from pathlib import Path
 
-from navox_agents.client import AgentClient
-from navox_agents.eval.scorer import score_agent, score_all_agents, format_scores
-from navox_agents.models.agent_config import AgentConfig
+from navox.client import AgentClient
+from navox.eval.scorer import score_agent, score_all_agents, format_scores
+from navox.models.agent_config import AgentConfig
 
 
 def main():
@@ -58,10 +58,11 @@ def main():
         parser.print_help()
         sys.exit(0)
 
-    # Find repo root (where CLAUDE.md lives)
+    # Find repo root (where CLAUDE.md lives) and SDK root
     repo_root = _find_repo_root()
     agents_dir = repo_root / ".claude" / "agents"
-    registry_path = repo_root / "agents_registry.json"
+    sdk_root = Path(__file__).parent.parent
+    registry_path = sdk_root / "agents_registry.json"
 
     client = AgentClient(agents_dir, registry_path)
 
