@@ -18,8 +18,14 @@ class HandoffContract:
     @classmethod
     def from_content(cls, agent_name: str, content: str) -> HandoffContract:
         """Parse handoff contract from agent markdown content."""
-        receives = _parse_contract_table(content, "What I expect to receive")
+        # "What I must deliver" always uses tables
         delivers = _parse_contract_table(content, "What I must deliver")
+
+        # "What I expect to receive" uses prose OR tables — try both
+        receives = _parse_contract_table(content, "What I expect to receive")
+        if not receives:
+            receives = _parse_receives_prose(content)
+
         validations = _parse_checklist(content)
 
         return cls(
@@ -75,18 +81,170 @@ def _parse_contract_table(content: str, header: str) -> list[ContractEntry]:
 
     section_text = match.group(1)
 
-    # Parse table rows (skip header and separator)
-    rows = re.findall(r"\|(.+?)\|(.+?)\|(.+?)\|", section_text)
+    # Parse table rows — handle both 3-column and 4+ column tables
+    # 4-column: | Mode | Section | Consumed by | Details |
+    # 3-column: | Section | Consumed by | Details |
+    rows = re.findall(r"\|(.+?)\|(.+?)\|(.+?)\|(?:(.+?)\|)?", section_text)
     for row in rows:
-        cells = [c.strip().strip("*") for c in row]
-        # Skip header rows
-        if cells[0].startswith("---") or cells[0] in ("Required section", "Source"):
+        cells = [c.strip().strip("*") for c in row if c]
+        # Skip header/separator rows
+        if any(c.startswith("---") for c in cells):
             continue
-        entries.append(
-            ContractEntry(section=cells[0], agent=cells[1], requirements=cells[2])
-        )
+        if cells[0].lower() in ("required section", "source", "mode"):
+            continue
+
+        if len(cells) >= 4:
+            # 4-column table: section=col[1], agent=col[2], requirements=col[3]
+            entries.append(
+                ContractEntry(section=cells[1], agent=cells[2], requirements=cells[3])
+            )
+        else:
+            # 3-column table: section=col[0], agent=col[1], requirements=col[2]
+            entries.append(
+                ContractEntry(section=cells[0], agent=cells[1], requirements=cells[2])
+            )
 
     return entries
+
+
+def _parse_receives_prose(content: str) -> list[ContractEntry]:
+    """Parse 'What I expect to receive' from prose format.
+
+    Agents use several patterns:
+    - From **Dmitri** (architect — DESIGN):         (bold name, parenthesized role)
+    - From **Jordan Rivera — Full Stack Engineer**:  (bold full name with role)
+    - From Marcus (spec-writer):                     (plain name, parenthesized role)
+    - from Dmitri Volkov (architect, DESIGN):         (inline in bold-prefixed line)
+    - From the builder directly:
+    - From the sprint chain:
+    """
+    entries = []
+
+    # Find the "What I expect to receive" section
+    pattern = r"###?\s*What I expect to receive(.*?)(?=###|\Z)"
+    match = re.search(pattern, content, re.DOTALL)
+    if not match:
+        return entries
+
+    section = match.group(1)
+
+    # Map human first names to agent slugs
+    name_to_slug = {
+        "raya": "strategist", "marcus": "spec-writer", "dmitri": "architect",
+        "lena": "ux", "jordan": "fullstack", "sam": "investigator",
+        "ava": "reviewer", "priya": "qa", "kai": "security",
+        "omar": "devops", "elena": "shipper", "james": "retro",
+        "nina": "context-manager",
+    }
+
+    found_slugs = set()
+
+    # Pattern 1: From **Name** (role) or From **Name — Role** (mode)
+    bold_patterns = re.findall(
+        r"[Ff]rom\s+\*\*([^*]+)\*\*\s*\(([^)]+)\)", section
+    )
+    for name_part, role_part in bold_patterns:
+        slug = _resolve_agent_slug(name_part, role_part, name_to_slug)
+        if slug and slug not in found_slugs:
+            found_slugs.add(slug)
+            entries.append(ContractEntry(
+                section=f"input from {slug}",
+                agent=slug,
+                requirements=role_part.strip(),
+            ))
+
+    # Pattern 2: From Name (role) — plain text, no bold
+    plain_patterns = re.findall(
+        r"[Ff]rom\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*\(([^)]+)\)", section
+    )
+    for name_part, role_part in plain_patterns:
+        slug = _resolve_agent_slug(name_part, role_part, name_to_slug)
+        if slug and slug not in found_slugs:
+            found_slugs.add(slug)
+            entries.append(ContractEntry(
+                section=f"input from {slug}",
+                agent=slug,
+                requirements=role_part.strip(),
+            ))
+
+    # Pattern 3: Inline "from Name (role)" inside bold-prefixed lines
+    # e.g., "**In CODE-AUDIT mode** — from Jordan Rivera (fullstack, BUILD):"
+    inline_patterns = re.findall(
+        r"from\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*\(([^)]+)\)", section
+    )
+    for name_part, role_part in inline_patterns:
+        slug = _resolve_agent_slug(name_part, role_part, name_to_slug)
+        if slug and slug not in found_slugs:
+            found_slugs.add(slug)
+            entries.append(ContractEntry(
+                section=f"input from {slug}",
+                agent=slug,
+                requirements=role_part.strip(),
+            ))
+
+    # Pattern 4: Agent names mentioned in sub-bullets
+    # e.g., "- Ava (reviewer)" or "- Priya (QA)"
+    bullet_patterns = re.findall(
+        r"[-•]\s+(?:.*?)([A-Z][a-z]+)\s*\(([^)]+)\)", section
+    )
+    for name_part, role_part in bullet_patterns:
+        slug = _resolve_agent_slug(name_part, role_part, name_to_slug)
+        if slug and slug not in found_slugs:
+            found_slugs.add(slug)
+            entries.append(ContractEntry(
+                section=f"input from {slug}",
+                agent=slug,
+                requirements=role_part.strip(),
+            ))
+
+    # Also check for "From the builder" / "From the sprint chain"
+    if re.search(r"[Ff]rom the builder|[Ff]rom builder", section):
+        entries.append(ContractEntry(
+            section="input from builder",
+            agent="builder",
+            requirements="direct input",
+        ))
+
+    if re.search(r"[Ff]rom the sprint chain|[Ff]rom.*sprint", section):
+        entries.append(ContractEntry(
+            section="input from sprint chain",
+            agent="sprint-chain",
+            requirements="chain context",
+        ))
+
+    if re.search(r"[Ff]rom any", section):
+        entries.append(ContractEntry(
+            section="input from any",
+            agent="any",
+            requirements="any agent",
+        ))
+
+    return entries
+
+
+def _resolve_agent_slug(
+    name_part: str,
+    role_part: str,
+    name_to_slug: dict[str, str],
+) -> str:
+    """Resolve a human name + role to an agent slug."""
+    first_name = name_part.split()[0].lower().rstrip(",")
+    agent_slug = name_to_slug.get(first_name, "")
+
+    if not agent_slug:
+        role_lower = role_part.lower()
+        for slug_name in [
+            "architect", "strategist", "spec-writer", "fullstack",
+            "ux", "investigator", "reviewer", "qa",
+            "security", "devops", "shipper", "retro", "context-manager",
+        ]:
+            if slug_name in role_lower:
+                agent_slug = slug_name
+                break
+
+    if agent_slug == "builder":
+        return ""
+    return agent_slug
 
 
 def _parse_checklist(content: str) -> list[str]:

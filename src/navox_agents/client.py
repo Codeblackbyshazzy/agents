@@ -120,8 +120,11 @@ class AgentClient:
                 key = f"few-shot:{slug}"
                 results[key] = validate_few_shot_examples(config.raw_content)
 
-        # Contract validation
-        results["contracts"] = validate_contracts(self.server.agents_dir)
+        # Contract validation (registry-aware)
+        results["contracts"] = validate_contracts(
+            self.server.agents_dir,
+            registry_path=self.server.registry_path,
+        )
 
         # Registry validation
         results["registry-contracts"] = validate_registry_contracts(

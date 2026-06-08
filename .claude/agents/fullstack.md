@@ -389,6 +389,13 @@ From **Lena** (ux — SPEC or DESIGN):
 From **Kai** (security — DESIGN-REVIEW):
 - **Auth constraints** — numbered rules to follow during BUILD
 
+From **Ava** (reviewer — REVIEW):
+- **Fix requests** — specific code issues to address with file paths and line numbers
+
+From **Sam** (investigator — INVESTIGATE, hotfix chain):
+- **Root cause analysis** — what broke, where, and why
+- **Reproduction steps** — how to verify the issue before and after the fix
+
 If Dmitri's doc or auth model is missing, flag it as a blocker before building. If Lena's specs are missing, flag it but proceed with sensible defaults. If Kai's constraints are missing, flag it but follow security best practices.
 
 ### What I must deliver
