@@ -1,0 +1,22 @@
+[project]
+name = "navox-agents"
+version = "3.0.0"
+description = "Agent orchestration, validation, and evaluation for the navox-labs/agents team"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.52.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+]
+
+[project.scripts]
+navox = "navox_agents.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
