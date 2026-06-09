@@ -10,8 +10,6 @@
 
 A Claude Code plugin **and** a Python CLI for autonomous orchestration. Install the plugin for interactive sprints. Use the SDK to run your team while you sleep.
 
-11 production services. 500+ shipped features. 90 days. One builder.
-
 ---
 
 ## Why I built this
@@ -22,9 +20,7 @@ I'm Nahrin, founder and builder at Navox Labs. Earlier in my life I worked in bu
 
 I've been building physical products for 16 years and tech products for 7. Twenty-three years of building, and I never thought AI could replace my ability to make decisions. It can't. But it can execute them.
 
-Right now I'm shipping more products than I ever have. In the last 90 days: 11 production services, 500+ shipped features — full-time while marketing, blogging, and launching. My 2026 run rate is insane.
-
-Navox Agents is how I do it.
+Navox Agents is how I ship.
 
 As a solo founder, I needed a reliable team that requires minimum management. Not a chatbot I have to babysit. Not a prompt I cross my fingers on. A team of specialists with defined roles, handoff contracts, quality gates, and the discipline to self-evaluate before passing work downstream.
 
